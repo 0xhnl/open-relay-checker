@@ -1,0 +1,37 @@
+id: smtp-open-relay
+
+info:
+  name: SMTP Open Relay Detection
+  author: 0xhnl
+  severity: high
+  description: |
+    This template checks for SMTP open relay vulnerability, which allows unauthorized users to send emails through the mail server.
+  tags: smtp,open-relay,vulnerability
+
+tcp:
+  - inputs:
+      - data: |
+          HELO testdomain.com\r\n
+      - data: |
+          MAIL FROM:<test@testdomain.com>\r\n
+      - data: |
+          RCPT TO:<test@anotherdomain.com>\r\n
+      - data: |
+          DATA\r\n
+      - data: |
+          Open Relay Test\r\n.\r\nQUIT\r\n
+    host:
+      - "{{Hostname}}"
+    port: 25
+    read-size: 2048
+    matchers:
+      - type: regex
+        part: data
+        regex:
+          - "250.*OK.*"
+        condition: and
+      - type: regex
+        part: data
+        regex:
+          - "554.*Relay denied.*"
+        negative: true
